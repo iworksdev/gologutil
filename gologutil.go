@@ -14,7 +14,7 @@ import (
 
 const (
 	CONF_FILE       = "log.json"
-	LOG_FIlE        = "app.log"
+	LOG_FILE        = "app.log"
 	LOG_PORT        = ":8888"
 	LOG_LEVEL       = "debug"
 	LOG_MAX_SIZE    = 100 //100MB
@@ -36,7 +36,7 @@ func init() {
 
 	if confErr != nil || !gjson.ValidBytes(conf) {
 
-		logFile = LOG_FIlE
+		logFile = LOG_FILE
 		logPort = LOG_PORT
 		logLevel = LOG_LEVEL
 		maxAge = LOG_MAX_AGE
@@ -48,7 +48,7 @@ func init() {
 		if gjson.GetBytes(conf, "logFile").String() != "" {
 			logFile = gjson.GetBytes(conf, "logFile").String()
 		} else {
-			logFile = LOG_FIlE
+			logFile = LOG_FILE
 		}
 
 		if gjson.GetBytes(conf, "logPort").String() != "" {
@@ -142,6 +142,22 @@ func Info(message string, key string, value string) {
 
 func InfoWithFields(message string, fields map[string]string) {
 	logger.Info(message, makeZapFiels(fields)...)
+}
+
+func Warn(message string, key string, value string) {
+	logger.Warn(message, zap.String(key, value))
+}
+
+func WarnWithFields(message string, fields map[string]string) {
+	logger.Warn(message, makeZapFiels(fields)...)
+}
+
+func Fatal(message string, key string, value string) {
+	logger.Fatal(message, zap.String(key, value))
+}
+
+func FatalWithFields(message string, fields map[string]string) {
+	logger.Fatal(message, makeZapFiels(fields)...)
 }
 
 func Sync() {
