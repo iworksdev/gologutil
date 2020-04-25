@@ -1,0 +1,8 @@
+{
+  "logFile": "test.log",
+  "logLevel": "debug",
+  "logPort": "6666",
+  "maxSize": 100,
+  "maxBackups": 1,
+  "maxAge": 15
+}
