@@ -18,6 +18,9 @@ func TestLog(t *testing.T) {
 		Warn("warn log", "level", "WARN LOGS")
 		WarnWithFields("test fields", map[string]string{"555": "eee", "666": "fff"})
 
+		Error("error log", "level", "ERROR LOGS")
+		ErrorWithFields("test fields", map[string]string{"999": "iii", "000": "jjj"})
+
 		//Fatal("fatal log", "level", "FATAL LOGS")
 		//FatalWithFields("test fields", map[string]string{"777": "ggg", "888": "hhh"})
 

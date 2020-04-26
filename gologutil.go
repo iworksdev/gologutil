@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	CONF_FILE       = "log.json"
-	LOG_FILE        = "app.log"
-	LOG_PORT        = ":8888"
-	LOG_LEVEL       = "debug"
-	LOG_MAX_SIZE    = 100 //100MB
-	LOG_MAX_BACKUPS = 3
-	LOG_MAX_AGE     = 30 //Days
+	ConfFile      = "log.json"
+	LogFile       = "app.log"
+	LogPort       = ":8888"
+	LogLevel      = "debug"
+	LogMaxSize    = 100 //100MB
+	LogMaxBackups = 3
+	LogMaxAge     = 30 //Days
 
 )
 
@@ -28,57 +28,65 @@ var (
 	logger                      *zap.Logger
 	aLevel                      zap.AtomicLevel
 	maxSize, maxBackups, maxAge int64
+	consoleOutput               bool
 )
 
 func init() {
 
-	conf, confErr := ioutil.ReadFile(CONF_FILE)
+	conf, confErr := ioutil.ReadFile(ConfFile)
 
 	if confErr != nil || !gjson.ValidBytes(conf) {
 
-		logFile = LOG_FILE
-		logPort = LOG_PORT
-		logLevel = LOG_LEVEL
-		maxAge = LOG_MAX_AGE
-		maxBackups = LOG_MAX_BACKUPS
-		maxSize = LOG_MAX_SIZE
+		logFile = LogFile
+		logPort = LogPort
+		logLevel = LogLevel
+		maxAge = LogMaxAge
+		maxBackups = LogMaxBackups
+		maxSize = LogMaxSize
+		consoleOutput = true
 
 	} else {
 
-		if gjson.GetBytes(conf, "logFile").String() != "" {
+		if gjson.GetBytes(conf, "logFile").Exists() {
 			logFile = gjson.GetBytes(conf, "logFile").String()
 		} else {
-			logFile = LOG_FILE
+			logFile = LogFile
 		}
 
-		if gjson.GetBytes(conf, "logPort").String() != "" {
+		if gjson.GetBytes(conf, "logPort").Exists() {
 			logPort = ":" + gjson.GetBytes(conf, "logPort").String()
 		} else {
-			logPort = LOG_PORT
+			logPort = LogPort
 		}
 
-		if gjson.GetBytes(conf, "logLevel").String() != "" {
+		if gjson.GetBytes(conf, "logLevel").Exists() {
 			logLevel = strings.ToLower(gjson.GetBytes(conf, "logLevel").String())
 		} else {
-			logLevel = LOG_LEVEL
+			logLevel = LogLevel
 		}
 
-		if gjson.GetBytes(conf, "maxSize").Uint() != 0 {
+		if gjson.GetBytes(conf, "consoleOutput").Exists() {
+			consoleOutput = gjson.GetBytes(conf, "consoleOutput").Bool()
+		} else {
+			consoleOutput = true
+		}
+
+		if gjson.GetBytes(conf, "maxSize").Exists() {
 			maxSize = gjson.GetBytes(conf, "maxSize").Int()
 		} else {
-			maxSize = LOG_MAX_SIZE
+			maxSize = LogMaxSize
 		}
 
-		if gjson.GetBytes(conf, "maxBackups").Uint() != 0 {
+		if gjson.GetBytes(conf, "maxBackups").Exists() {
 			maxBackups = gjson.GetBytes(conf, "maxBackups").Int()
 		} else {
-			maxBackups = LOG_MAX_BACKUPS
+			maxBackups = LogMaxBackups
 		}
 
-		if gjson.GetBytes(conf, "maxAge").Uint() != 0 {
+		if gjson.GetBytes(conf, "maxAge").Exists() {
 			maxAge = gjson.GetBytes(conf, "maxAge").Int()
 		} else {
-			maxAge = LOG_MAX_AGE
+			maxAge = LogMaxAge
 		}
 
 	}
@@ -114,7 +122,13 @@ func init() {
 	//格式化时间显示方式
 	encoder.EncodeTime = zapcore.ISO8601TimeEncoder
 	//文件和控制台同时输出
-	syncConfig := zapcore.NewMultiWriteSyncer(w, zapcore.AddSync(os.Stdout))
+	var syncConfig zapcore.WriteSyncer
+	if consoleOutput {
+		syncConfig = zapcore.NewMultiWriteSyncer(w, zapcore.AddSync(os.Stdout))
+	} else {
+		syncConfig = zapcore.WriteSyncer(w)
+	}
+
 	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoder), syncConfig, aLevel)
 	logger = zap.New(core)
 
@@ -152,6 +166,14 @@ func WarnWithFields(message string, fields map[string]string) {
 	logger.Warn(message, makeZapFiels(fields)...)
 }
 
+func Error(message string, key string, value string) {
+	logger.Error(message, zap.String(key, value))
+}
+
+func ErrorWithFields(message string, fields map[string]string) {
+	logger.Error(message, makeZapFiels(fields)...)
+}
+
 func Fatal(message string, key string, value string) {
 	logger.Fatal(message, zap.String(key, value))
 }
@@ -171,4 +193,5 @@ func PrintConf() {
 	fmt.Println("maxSize(MB):", maxSize)
 	fmt.Println("maxBackups:", maxBackups)
 	fmt.Println("maxAge(Days):", maxAge)
+	fmt.Println("consoleOutput:", consoleOutput)
 }
