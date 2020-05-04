@@ -1,4 +1,4 @@
-module gologutil
+module github.com/iworksdev/gologutil
 
 go 1.14
 
